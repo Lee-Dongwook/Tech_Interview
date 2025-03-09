@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useQuestions } from "@/app/hooks/useQuestions";
+import { Question } from "@/app/types";
 
 export default function QuestionList() {
   const { data: questions, isLoading } = useQuestions();
@@ -10,7 +11,7 @@ export default function QuestionList() {
 
   return (
     <div className="p-4 max-w-3xl mx-auto">
-      {questions?.map((q: any) => (
+      {questions?.map((q: Question) => (
         <div key={q.id} className="p-4 border rounded-lg shadow-md mb-4">
           <h3 className="text-lg font-semibold">{q.question}</h3>
           <p className="text-gray-600">{q.answer}</p>
