@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useQuestions } from "@/app/hooks/useQuestions";
 import { Question } from "@/app/types";
 
@@ -81,10 +82,12 @@ export default function QuestionList() {
       </select>
 
       {paginatedQuestions?.map((q: Question) => (
-        <div key={q.id} className="p-4 border rounded-lg shadow-md mb-4">
-          <h3 className="text-lg font-semibold">{q.question}</h3>
-          <p className="text-gray-600">{q.answer}</p>
-          <span className="text-sm text-blue-500">{q.category}</span>
+        <div className="p-4 border rounded-lg shadow-md mb-4" key={q.id}>
+          <Link href={`/questions/${q.id}`} key={q.id}>
+            <h3 className="text-lg font-semibold">{q.question}</h3>
+            <p className="text-gray-600">{q.answer}</p>
+            <span className="text-sm text-blue-500">{q.category}</span>
+          </Link>
         </div>
       ))}
 

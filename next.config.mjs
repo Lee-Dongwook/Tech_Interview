@@ -1,7 +1,3 @@
-const nextConfig = {
-  experimental: {
-    appDir: true, // App Router 사용
-  },
-};
+const nextConfig = {};
 
 export default nextConfig;
