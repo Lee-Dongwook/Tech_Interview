@@ -3,34 +3,96 @@
 import { useEffect, useState } from "react";
 import { auth } from "@/firebase-config";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { useUser } from "@/app/hooks/useUser";
 import { useRouter } from "next/navigation";
+import { uploadProfileImage } from "@/app/utils/uploadProfileImage";
 
 export default function MyPage() {
-  const [user, setUser] = useState(auth.currentUser);
+  const { userProfile, updateUserProfile } = useUser();
+  const [name, setName] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (!currentUser) {
-        router.push("/login");
-      } else {
-        setUser(currentUser);
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
+    if (userProfile) {
+      setName(userProfile.name || "");
+    }
+  }, [userProfile]);
+
+  const handleUpdateProfile = async () => {
+    await updateUserProfile.mutateAsync({ name });
+  };
 
   const handleLogout = async () => {
     await signOut(auth);
-    router.push("/login");
+    router.push("/");
   };
 
-  if (!user) return <p className="text-center">로딩 중...</p>;
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0]);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!image) return;
+    setUploading(true);
+    try {
+      const imageUrl = await uploadProfileImage(image);
+      await updateUserProfile.mutateAsync({ profileImage: imageUrl });
+    } catch (error) {
+      console.error("프로필 사진 업로드 실패", error);
+    }
+    setUploading(false);
+  };
 
   return (
     <div className="p-6 max-w-md mx-auto">
       <h1 className="text-2xl font-bold mb-4">마이페이지</h1>
-      <p className="mb-4">이메일: {user.email}</p>
+      <p className="mb-4">이메일: {userProfile?.email}</p>
+
+      <div className="mb-4 text-center">
+        <img
+          src={
+            userProfile?.profileImage && userProfile.profileImage !== ""
+              ? userProfile.profileImage
+              : "/default-avatar.png"
+          }
+          alt="프로필 사진"
+          className="w-24 h-24 rounded-full mx-auto border"
+        />
+      </div>
+
+      <div className="mb-4">
+        <input
+          type="file"
+          onChange={handleImageChange}
+          accept="image/*"
+          className="mb-2"
+        />
+        <button
+          onClick={handleUpload}
+          disabled={!image || uploading}
+          className="w-full bg-green-600 text-white py-2 rounded-lg disabled:bg-gray-400"
+        >
+          {uploading ? "업로드 중..." : "프로필 사진 업로드 완료"}
+        </button>
+      </div>
+
+      <input
+        type="text"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="w-full p-2 border rounded-lg mb-4"
+      />
+      <button
+        onClick={handleUpdateProfile}
+        className="w-full bg-blue-600 text-white py-2 rounded-lg mb-4"
+      >
+        프로필 업데이트
+      </button>
+
       <button
         onClick={handleLogout}
         className="w-full bg-red-600 text-white py-2 rounded-lg"

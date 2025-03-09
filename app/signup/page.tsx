@@ -1,25 +1,40 @@
 "use client";
 
 import { useState } from "react";
-import { auth } from "@/firebase-config";
+import { auth, db } from "@/firebase-config";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { doc, setDoc } from "firebase/firestore";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
   const handleSignup = async () => {
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        email: user.email,
+        name: name,
+        profileImage: "",
+        createdAt: new Date(),
+      });
+
       router.push("/login");
     } catch (err) {
       setError("회원가입에 실패했습니다.");
     }
   };
-
   return (
     <div className="p-6 max-w-md mx-auto">
       <h1 className="text-2xl font-bold mb-4">회원가입</h1>
