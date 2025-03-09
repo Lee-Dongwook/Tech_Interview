@@ -15,6 +15,7 @@ interface UserProfile {
   name: string;
   email: string;
   profileImage: string;
+  bookmarkedQuestions?: string[];
 }
 
 export const useUser = () => {

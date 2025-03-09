@@ -1,22 +1,54 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuestions } from "@/app/hooks/useQuestions";
 import { Question } from "@/app/types";
+import { auth, db } from "@/firebase-config";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { useUser } from "@/app/hooks/useUser";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const categories = ["all", "frontend", "backend", "database"];
+const difficultyFilters = ["all", "easy", "medium", "hard"];
 const sortOptions = ["newest", "difficulty"];
 const QUESTIONS_PER_PAGE = 5;
 
 export default function QuestionList() {
   const { data: questions, isLoading } = useQuestions();
+  const { userProfile } = useUser();
+  const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
+  const [bookmarkedQuestions, setBookmarkedQuestions] = useState<string[]>([]);
 
-  if (isLoading) return <p className="text-center">Loading...</p>;
+  useEffect(() => {
+    if (userProfile?.bookmarkedQuestions) {
+      setBookmarkedQuestions(userProfile.bookmarkedQuestions);
+    }
+  }, [userProfile]);
+
+  const toggleBookmarkMutation = useMutation({
+    mutationFn: async (questionId: string) => {
+      if (!auth.currentUser) throw new Error("로그인이 필요합니다.");
+
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      const newBookmarks = bookmarkedQuestions.includes(questionId)
+        ? bookmarkedQuestions.filter((id) => id !== questionId)
+        : [...bookmarkedQuestions, questionId];
+
+      setBookmarkedQuestions(newBookmarks);
+      await updateDoc(userDocRef, { bookmarkedQuestions: newBookmarks });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["userProfile", auth.currentUser?.uid],
+      });
+    },
+  });
 
   const filteredQuestions = questions
     ?.filter((q) =>
@@ -41,9 +73,35 @@ export default function QuestionList() {
     currentPage * QUESTIONS_PER_PAGE
   );
 
+  const copyToClipboard = (url: string) => {
+    navigator.clipboard.writeText(url);
+    alert("📎 링크가 클립보드에 복사되었습니다!");
+  };
+
+  const shareOnTwitter = (question: string, url: string) => {
+    const text = encodeURIComponent(`🔥 기술 면접 질문: ${question} - ${url}`);
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
+  };
+
+  const getRandomQuestion = () => {
+    if (!questions || questions.length === 0) return;
+    const randomQuestion =
+      questions[Math.floor(Math.random() * questions.length)];
+    window.location.href = `/questions/${randomQuestion.id}`;
+  };
+
+  if (isLoading) return <p className="text-center">Loading...</p>;
+
   return (
     <div className="p-4 max-w-3xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">📝 면접 질문 목록</h1>
+
+      <button
+        onClick={getRandomQuestion}
+        className="w-full bg-purple-600 text-white py-2 rounded-lg mb-4"
+      >
+        🎲 랜덤 질문 받기
+      </button>
 
       <div className="mb-4 flex items-center space-x-2">
         <input
@@ -53,21 +111,36 @@ export default function QuestionList() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full p-2 border rounded-lg mb-4"
         />
-        <div className="mb-4 flex space-x-2">
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-4 py-2 rounded-lg transition-colors duration-200 ${
-                selectedCategory === category
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 hover:bg-gray-300"
-              }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
+      </div>
+      <div className="mb-4 flex space-x-2">
+        {categories.map((category) => (
+          <button
+            key={category}
+            onClick={() => setSelectedCategory(category)}
+            className={`px-4 py-2 rounded-lg transition-colors duration-200 ${
+              selectedCategory === category
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 hover:bg-gray-300"
+            }`}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
+      <div className="mb-4 flex space-x-2">
+        {difficultyFilters.map((difficulty) => (
+          <button
+            key={difficulty}
+            onClick={() => setSelectedDifficulty(difficulty)}
+            className={`px-4 py-2 rounded-lg ${
+              selectedDifficulty === difficulty
+                ? "bg-green-600 text-white"
+                : "bg-gray-200"
+            }`}
+          >
+            {difficulty}
+          </button>
+        ))}
       </div>
 
       <select
@@ -96,6 +169,34 @@ export default function QuestionList() {
               {q.category}
             </span>
           </Link>
+
+          <div className="flex justify-between mt-2">
+            <button
+              onClick={() => toggleBookmarkMutation.mutate(q.id)}
+              className="text-yellow-500"
+            >
+              {bookmarkedQuestions.includes(q.id) ? "⭐" : "☆"}
+            </button>
+            <button
+              onClick={() =>
+                copyToClipboard(window.location.origin + `/questions/${q.id}`)
+              }
+              className="text-gray-500"
+            >
+              📎 복사
+            </button>
+            <button
+              onClick={() =>
+                shareOnTwitter(
+                  q.question,
+                  window.location.origin + `/questions/${q.id}`
+                )
+              }
+              className="text-blue-500"
+            >
+              🐦 공유
+            </button>
+          </div>
         </div>
       ))}
 
