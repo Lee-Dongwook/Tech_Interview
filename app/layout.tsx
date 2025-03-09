@@ -1,5 +1,6 @@
 import QueryProvider from "@/app/providers/QueryProvider";
 import "@/app/styles/globals.css";
+import Link from "next/link";
 
 export const metadata = {
   title: "Next.js",
@@ -14,7 +15,20 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <nav className="flex justify-between p-4 bg-gray-800 text-white">
+            <Link href="/" className="font-bold text-lg">
+              면접 대비
+            </Link>
+            <div className="space-x-4">
+              <Link href="/questions">질문 목록</Link>
+              <Link href="/login">로그인</Link>
+              <Link href="/signup">회원가입</Link>
+              <Link href="/mypage">마이페이지</Link>
+            </div>
+          </nav>
+          {children}
+        </QueryProvider>
       </body>
     </html>
   );
