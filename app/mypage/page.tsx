@@ -1,24 +1,41 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth } from "@/firebase-config";
+import { auth, db } from "@/firebase-config";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import { useUser } from "@/app/hooks/useUser";
 import { useRouter } from "next/navigation";
 import { uploadProfileImage } from "@/app/utils/uploadProfileImage";
+import { Doughnut } from "react-chartjs-2";
+import { useAnwserStats } from "@/app/hooks/useAnswerStats";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function MyPage() {
+  const router = useRouter();
   const { userProfile, updateUserProfile } = useUser();
+  const { answerStats } = useAnwserStats();
   const [name, setName] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     if (userProfile) {
       setName(userProfile.name || "");
     }
   }, [userProfile]);
+
+  const chartData = {
+    labels: ["맞힌 문제", "틀린 문제"],
+    datasets: [
+      {
+        data: [answerStats?.correct, answerStats?.incorrect],
+        backgroundColor: ["#4CAF50", "#FF5252"],
+      },
+    ],
+  };
 
   const handleUpdateProfile = async () => {
     await updateUserProfile.mutateAsync({ name });
@@ -63,6 +80,9 @@ export default function MyPage() {
           className="w-24 h-24 rounded-full mx-auto border"
         />
       </div>
+
+      <p className="mb-2">총 푼 문제: {answerStats?.total || 0}</p>
+      <Doughnut data={chartData} />
 
       <div className="mb-4">
         <input
