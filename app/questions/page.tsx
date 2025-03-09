@@ -11,6 +11,7 @@ export default function QuestionList() {
 
   return (
     <div className="p-4 max-w-3xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6">📝 면접 질문 목록</h1>
       {questions?.map((q: Question) => (
         <div key={q.id} className="p-4 border rounded-lg shadow-md mb-4">
           <h3 className="text-lg font-semibold">{q.question}</h3>
