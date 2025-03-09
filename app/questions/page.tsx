@@ -6,12 +6,14 @@ import { Question } from "@/app/types";
 
 const categories = ["all", "frontend", "backend", "database"];
 const sortOptions = ["newest", "difficulty"];
+const QUESTIONS_PER_PAGE = 5;
 
 export default function QuestionList() {
   const { data: questions, isLoading } = useQuestions();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
 
   if (isLoading) return <p className="text-center">Loading...</p>;
 
@@ -28,6 +30,15 @@ export default function QuestionList() {
         return difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
       }
     });
+
+  const totalPages = Math.ceil(
+    (filteredQuestions?.length || 0) / QUESTIONS_PER_PAGE
+  );
+
+  const paginatedQuestions = filteredQuestions?.slice(
+    (currentPage - 1) * QUESTIONS_PER_PAGE,
+    currentPage * QUESTIONS_PER_PAGE
+  );
 
   return (
     <div className="p-4 max-w-3xl mx-auto">
@@ -69,13 +80,45 @@ export default function QuestionList() {
         ))}
       </select>
 
-      {filteredQuestions?.map((q: Question) => (
+      {paginatedQuestions?.map((q: Question) => (
         <div key={q.id} className="p-4 border rounded-lg shadow-md mb-4">
           <h3 className="text-lg font-semibold">{q.question}</h3>
           <p className="text-gray-600">{q.answer}</p>
           <span className="text-sm text-blue-500">{q.category}</span>
         </div>
       ))}
+
+      <div className="flex justify-between mt-6">
+        <button
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className={`px-4 py-2 rounded-lg ${
+            currentPage === 1
+              ? "bg-gray-300 cursor-not-allowed"
+              : "bg-blue-600 text-white"
+          }`}
+        >
+          이전 페이지
+        </button>
+
+        <span className="text-lg font-semibold">
+          {currentPage} / {totalPages}
+        </span>
+
+        <button
+          onClick={() =>
+            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+          }
+          disabled={currentPage === totalPages}
+          className={`px-4 py-2 rounded-lg ${
+            currentPage === totalPages
+              ? "bg-gray-300 cursor-not-allowed"
+              : "bg-blue-600 text-white"
+          }`}
+        >
+          다음 페이지
+        </button>
+      </div>
     </div>
   );
 }
