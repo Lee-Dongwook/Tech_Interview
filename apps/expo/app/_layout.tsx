@@ -1,3 +1,4 @@
+import { Provider } from 'app/provider/index'
 import { Stack } from 'expo-router'
 import {
   SafeAreaView,
@@ -15,7 +16,7 @@ import Constants from 'expo-constants'
 
 export default function Root() {
   return (
-    <>
+    <Provider>
       <StatusBar style="dark" />
       <SafeAreaView style={styles.container}>
         <Stack screenOptions={{ headerShown: false }}>
@@ -31,7 +32,7 @@ export default function Root() {
           />
         </Stack>
       </SafeAreaView>
-    </>
+    </Provider>
   )
 }
 
