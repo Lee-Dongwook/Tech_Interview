@@ -1,0 +1,8 @@
+{
+  "android": {
+    "package": "com.leedongwook.expoapp"
+  },
+  "ios": {
+    "bundleIdentifier": "com.leedongwook.expoapp"
+  }
+}

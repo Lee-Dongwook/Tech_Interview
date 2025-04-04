@@ -5,6 +5,7 @@ import { View, Text } from 'react-native'
 import { Session } from '@supabase/supabase-js'
 import { useQuery } from '@tanstack/react-query'
 import axiosInstance from 'app/api/common/axiosInstance'
+import Login from './login'
 
 export default function Index() {
   const [session, setSession] = useState<Session | null>(null)

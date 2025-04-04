@@ -45,7 +45,7 @@
     "native:build": "cd apps/expo && npx expo prebuild",
     "native:ipa": "cd apps/expo && eas build --profile preview:ios --platform ios --local",
     "native:apk": "cd apps/expo && eas build --profile preview:android --platform android --local",
-    "open:xcode": "cd apps/expo/ios",
+    "open:xcode": "cd apps/expo/ios && open expoapp.xcworkspace",
     "open:android:studio": "open -a \"Android Studio\" apps/expo/android"
   },
   "lint-staged": {
